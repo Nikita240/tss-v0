@@ -24,7 +24,8 @@ RH_RF95 rf95(RFM95_CS, RFM95_INT);
 // Blinky on receipt
 #define LED 5
 
-#define ALARM 10
+#define ALARM 11
+#define ALARM2 13
 
 #define DANGER_TIMEOUT 5000
 
@@ -44,8 +45,9 @@ void setup()
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
   pinMode(ALARM, OUTPUT);
+  pinMode(ALARM2, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
-  digitalWrite(ALARM, LOW);
+  setAlarm(LOW); 
 
   Serial.begin(115200);
 
@@ -108,7 +110,12 @@ void loop()
     }
   }
 
-  digitalWrite(ALARM, danger);
+  if(danger) {
+    playDangerAnimation();
+  }
+  else {
+    setAlarm(danger); 
+  }
 
   // Update status LED if we haven't got data in a while.
   if(millis() - lastRecievedTime > 550)
@@ -126,16 +133,34 @@ void loop()
   }
 }
 
+unsigned long lastAnimStateChange = 0;
+bool animState = false;
+
+void playDangerAnimation() {
+  unsigned long current_time = millis();
+
+  if (current_time - lastAnimStateChange > 50) {
+    animState = !animState;
+    setAlarm(animState);
+    lastAnimStateChange = current_time;
+  }
+}
+
+void setAlarm(bool state) {
+  digitalWrite(ALARM, state);
+  digitalWrite(ALARM2, state); 
+}
+
 void playTimeoutAnimation()
 {
-  digitalWrite(ALARM, LOW); 
+  setAlarm(LOW);
   delay(500);
-  digitalWrite(ALARM, HIGH);
+  setAlarm(HIGH); 
   delay(200);
-  digitalWrite(ALARM, LOW); 
+  setAlarm(LOW); 
   delay(100);
-  digitalWrite(ALARM, HIGH);
+  setAlarm(HIGH); 
   delay(200);
-  digitalWrite(ALARM, LOW); 
+  setAlarm(LOW);
   
 }

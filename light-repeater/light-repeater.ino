@@ -22,11 +22,7 @@
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
 // Blinky on receipt
-#define LED 5
-
-#define ALARM 10
-
-#define DANGER_TIMEOUT 5000
+#define LED A3
 
 unsigned long lastRecievedTime = 0;
 
@@ -43,9 +39,7 @@ void setup()
 {
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
-  pinMode(ALARM, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
-  digitalWrite(ALARM, LOW);
 
   Serial.begin(115200);
 
@@ -101,14 +95,14 @@ void loop()
       }
 
       lastRecievedTime = millis();
+
+      sendMessage(message);
     }
     else
     {
       Serial.println("RECEIVE FAILED");
     }
   }
-
-  digitalWrite(ALARM, danger);
 
   // Update status LED if we haven't got data in a while.
   if(millis() - lastRecievedTime > 550)
@@ -118,24 +112,11 @@ void loop()
   else {
     digitalWrite(LED, HIGH);
   }
-
-  if(danger && millis() - lastRecievedTime > DANGER_TIMEOUT)
-  {
-    danger = false;
-    playTimeoutAnimation();
-  }
 }
 
-void playTimeoutAnimation()
+void sendMessage(Message message)
 {
-  digitalWrite(ALARM, LOW); 
-  delay(500);
-  digitalWrite(ALARM, HIGH);
-  delay(200);
-  digitalWrite(ALARM, LOW); 
-  delay(100);
-  digitalWrite(ALARM, HIGH);
-  delay(200);
-  digitalWrite(ALARM, LOW); 
-  
+  uint8_t data = message;
+  rf95.send(&data, sizeof(data));
+  rf95.waitPacketSent();
 }
